@@ -94,7 +94,7 @@ class SemrushTest extends TestCase
 
     public function testRelated(): void
     {
-        Http::fake([self::URL => Http::response("Keyword;Search Volume\nLaravel Admin Panel;2400\nlaravel headless cms;320\n")]);
+        Http::fake([self::URL => Http::response("Keyword;Search Volume\nLaravel Admin Panel;2400\nlaravel headless cms;320\nlaravel admin panel;10\n")]);
 
         $this->assertEquals([
             new Keyword('laravel admin panel', 2400),
@@ -133,6 +133,16 @@ class SemrushTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Semrush API request failed: ERROR 132 :: API UNITS BALANCE IS ZERO');
+        Keywords::volume(['laravel cms']);
+    }
+
+
+    public function testRedirect(): void
+    {
+        Http::fake([self::URL => Http::response('', 302, ['Location' => 'https://example.com/'])]);
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Semrush API request failed: HTTP status 302');
         Keywords::volume(['laravel cms']);
     }
 

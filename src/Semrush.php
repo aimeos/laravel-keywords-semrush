@@ -34,7 +34,7 @@ class Semrush implements Driver
 
     public function volume(array $keywords, ?string $country = null): array
     {
-        $keywords = array_values(array_unique(array_filter(array_map(fn($keyword) => $this->normalize($keyword), $keywords), fn($keyword) => $keyword !== '')));
+        $keywords = Keyword::unique($keywords);
         // keywords are passed as semicolon separated list
         $valid = array_filter($keywords, fn($keyword) => !str_contains($keyword, ';'));
         $volumes = [];
@@ -51,7 +51,7 @@ class Semrush implements Driver
 
     public function related(string $keyword, ?string $country = null, int $limit = 50): array
     {
-        if (($keyword = $this->normalize($keyword)) === '' || str_contains($keyword, ';')) {
+        if (($keyword = Keyword::normalize($keyword)) === '' || str_contains($keyword, ';')) {
             return [];
         }
 
@@ -62,7 +62,13 @@ class Semrush implements Driver
             'display_sort' => 'nq_desc',
         ], $country);
 
-        return array_map(fn($row) => new Keyword($row[0], $row[1]), $rows);
+        $list = [];
+
+        foreach ($rows as [$text, $volume]) {
+            $list[$text] ??= new Keyword($text, $volume);
+        }
+
+        return array_values($list);
     }
 
 
@@ -73,7 +79,7 @@ class Semrush implements Driver
      */
     protected function client(): PendingRequest
     {
-        return Http::timeout($this->config['timeout'] ?? 30);
+        return Http::withoutRedirecting()->timeout($this->config['timeout'] ?? 30);
     }
 
 
@@ -91,18 +97,6 @@ class Semrush implements Driver
 
         $code = strtolower($country);
         return $code === 'gb' ? 'uk' : $code; // Semrush uses "uk" for the United Kingdom
-    }
-
-
-    /**
-     * Normalizes the keyword
-     *
-     * @param string $keyword Keyword
-     * @return string Trimmed keyword in lower case with single spaces
-     */
-    protected function normalize(string $keyword): string
-    {
-        return mb_strtolower(trim((string) preg_replace('/\s+/u', ' ', $keyword)));
     }
 
 
@@ -135,7 +129,7 @@ class Semrush implements Driver
             return [];
         }
 
-        if ($response->failed() || str_starts_with($body, 'ERROR')) {
+        if (!$response->successful() || str_starts_with($body, 'ERROR')) {
             $error = str_starts_with($body, 'ERROR') ? explode("\n", $body)[0] : 'HTTP status ' . $response->status();
             throw new \RuntimeException('Semrush API request failed: ' . $error);
         }
@@ -146,7 +140,7 @@ class Semrush implements Driver
             $cols = explode(';', rtrim($line, "\r"));
 
             if ($cols[0] !== '') {
-                $rows[] = [$this->normalize($cols[0]), is_numeric($cols[1] ?? null) ? (int) $cols[1] : null];
+                $rows[] = [Keyword::normalize($cols[0]), is_numeric($cols[1] ?? null) ? (int) $cols[1] : null];
             }
         }
 
