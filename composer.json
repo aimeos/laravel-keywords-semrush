@@ -1,0 +1,28 @@
+{
+  "name": "aimeos/laravel-keywords-semrush",
+  "description": "Semrush driver for Laravel Keywords Bridge",
+  "keywords": ["laravel", "seo", "keywords", "search volume", "semrush"],
+  "type": "library",
+  "license": "LGPL-2.1+",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-4": {
+      "Aimeos\\KeywordsBridge\\Drivers\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
+  "require": {
+    "php": "^8.2",
+    "aimeos/laravel-keywords-bridge": "~1.0||dev-master",
+    "illuminate/http": "^11.0||^12.0||^13.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^9.0||^10.0||^11.0",
+    "phpunit/phpunit": "^11.5||^12.0"
+  }
+}
